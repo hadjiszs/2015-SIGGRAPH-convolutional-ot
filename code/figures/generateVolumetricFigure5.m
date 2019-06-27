@@ -42,17 +42,18 @@ if 1 % not(exist('names'))
     %names = {'sphere', 'boxes'};
     %names = {'duck', 'horse'};
     %names = {'duck' 'horse' 'shears' 'moomoo_s0'};
-    names = {'sphere','duck','torus'};
+    %names = {'spot_flipped','duck','torus'};
+  names = {'torus','duck','torus'};
 end
-p = length(names);
+p = length(names)
 
 f = {};
 
 close all
 
 for i=1:p
-    name = names{i};
-    f{i} = normalize( load_volume(names{i}, N) );
+    name = names{i}
+    f{i} = normalize( load_volume(names{i}, N) )
     if isempty(f{i})
         % try to load a mesh %%
         [V,F] = read_off([name '.off']);

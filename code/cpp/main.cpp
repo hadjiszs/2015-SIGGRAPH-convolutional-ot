@@ -1,5 +1,9 @@
 #include "Viewer.h"
 
+#include <iostream>
+#include <unistd.h>
+
+#include <GL/glew.h>
 bool parseCmdLine(int argc, char** argv, 
                   ot::Options& opt, 
                   char* & meshFile, 
@@ -95,6 +99,7 @@ int main(int argc, char** argv)
     // set OT solver
     ot::ConvSolver otsolver(opt, area, lsolver);
 
+  
     // gui
     Viewer viewer;
     viewer.meshPtr = &mesh;
