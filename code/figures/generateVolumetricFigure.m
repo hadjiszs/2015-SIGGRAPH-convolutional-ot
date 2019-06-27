@@ -113,12 +113,12 @@ if not(exist(rep))
 end
 
 
-%% 
+%%
 % Compute transport coupling
-%   pi = diag(w1)*K*diag(w0)  
-% and  
-%   pi*1 = w1.*K(w0) = p1 
-% and 
+%   pi = diag(w1)*K*diag(w0)
+% and
+%   pi*1 = w1.*K(w0) = p1
+% and
 %   pi'*1 = w1.*K(w0) = p0
 
 options.tol = 1e-9;
@@ -128,13 +128,13 @@ options.verb = 2;
 slicing = @(x)x(:,:,end/2);
 options.disp = @(w0,w1)imageplot( slicing(w0.*K(w1)) );
 
-% clf; 
+% clf;
 % [distances,w0,w1] = convolutionalDistance(f{1}, f{2}, [], K,[], options);
 
 %%
 % Compute displacement interpolation
 
-q = 5; 
+q = 5;
 switch p
     case 2
         % displacement interpolation
@@ -153,7 +153,7 @@ switch p
         % bilinear interpolation
         t = linspace(0,1,q);
         [T,S] = meshgrid(t,t); S = S(:); T = T(:);
-        W = [(1-S).*(1-T) S.*(1-T) (1-S).*T S.*T]';
+        W = [(1-S).*(1-T) S.*(1-T) (1-S).*T S.*T]'
 end
 Q = size(W,2);
 
@@ -163,10 +163,10 @@ Q = size(W,2);
 for i=1:Q
     w = W(:,i)'; w = w/sum(w);
     % select entropy bound
-	entropyLimit = [];
-    % store as 2D matrix
-    Hv = []; 
-    for k = 1:p        
+        entropyLimit = [];
+    % store as 2D matrix3
+    Hv = [];
+    for k = 1:p
         Hv = [Hv f{k}(:)/sum(f{k}(:))];
     end
     % do the computation
@@ -179,7 +179,7 @@ for i=1:Q
         warning('NaN problem.');
     end
 end
- 
+
 %%
 % Do the rendering.
 
@@ -189,12 +189,12 @@ for i=1:Q
     w = W(:,i)'; w = w/sum(w);
     B = Bsvg{i};
     % display
-    clf; 
+    clf;
     opts.alpha = 1; % transparency
-	opts.color = sum(col(1:p,:) .* repmat(w(:),[1 3]) );
+        opts.color = sum(col(1:p,:) .* repmat(w(:),[1 3]) );
     opts.isolevel = median(B(:));
     opts.isolevel = (max(B(:))-min(B(:)))/2;
-    F = plot_isosurface(B,opts);    
+    F = plot_isosurface(B,opts);
     % save as image
     if p==4
         str = ['barycenter-' num2str(S(i)*(q-1)) '-' num2str(T(i)*(q-1))];
@@ -203,11 +203,11 @@ for i=1:Q
     end
     saveas(gcf, [rep str '.png'], 'png');
     % save as object
-    if 0
+    if 1
     mesh.vertices = F.vertices;
     mesh.triangles = F.faces;
     mesh.numVertices = size(F.vertices, 1);
     vertexTexture = zeros(mesh.numVertices,1);
-    writeTexturedObj([rep 'barycenter-' str '.obj'], mesh, vertexTexture); 
+    writeTexturedObj([rep 'barycenter-' str '.obj'], mesh, vertexTexture);
     end
 end

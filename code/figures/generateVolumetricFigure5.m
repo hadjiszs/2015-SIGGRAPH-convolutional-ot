@@ -42,7 +42,7 @@ if 1 % not(exist('names'))
     %names = {'sphere', 'boxes'};
     %names = {'duck', 'horse'};
     %names = {'duck' 'horse' 'shears' 'moomoo_s0'};
-    names = {'spot_flipped','duck','torus'};
+    names = {'sphere','duck','torus'};
 end
 p = length(names);
 
