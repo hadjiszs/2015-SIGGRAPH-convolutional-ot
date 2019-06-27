@@ -6,9 +6,7 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #else
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <GL/glut.h>
+#include <GL/glew.h>
 #endif
 
 #include <string>

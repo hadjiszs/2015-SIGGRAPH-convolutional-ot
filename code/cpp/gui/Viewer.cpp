@@ -6,10 +6,11 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #else
-#include <GL/gl.h>
-#include <GL/glext.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #endif
+
+#include <iostream>
 
 int  Viewer::windowSize[2] = { 800, 800 };
 bool Viewer::renderWireframe = false;
@@ -57,11 +58,15 @@ Viewer::keyboard(unsigned char c, int /*x*/, int /*y*/)
         case '/':
             takeScreenshot();
             break;
-        case '=':
+        case 'p':
             timestep += 0.1;
+			runInterpolation();
+            updateDisplayList();
             break;
-        case '-':
+        case 'm':
             timestep -= 0.1;
+			runInterpolation();
+            updateDisplayList();
             break;
         default:
             break;
@@ -92,6 +97,12 @@ Viewer::initGLUT(int argc, char** argv)
     glutMotionFunc  (Viewer::motion  );
     glutDisplayFunc (Viewer::display );
     glutIdleFunc    (Viewer::idle    );
+	
+	
+	GLenum err = glewInit();
+	if (err != GLEW_OK)
+		std::cerr << "\nglew not ok" << std::endl; // or handle the error in a nicer way
+	
 }
    
 void 
