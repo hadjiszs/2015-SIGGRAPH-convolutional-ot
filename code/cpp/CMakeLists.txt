@@ -40,6 +40,7 @@ endif(USE_OPENMP)
 
 find_package(GLUT)
 find_package(OpenGL)
+find_package(GLEW)
 
 find_package(Eigen3)
 #-------#
@@ -77,4 +78,4 @@ if(USE_OPENMP AND OPENMP_FOUND)
 endif()
 
 add_executable(${PROJECT_NAME} ${SRCS})
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES})
