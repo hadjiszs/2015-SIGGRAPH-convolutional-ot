@@ -97,7 +97,8 @@ double ConvSolver::computeDistance(VectorXd  p0, VectorXd  p1,
     return dist;
 }
 
-void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, VectorXd& q, bool useSharpening, int verbose) const
+void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, VectorXd& q,
+                                   bool useSharpening, int verbose) const
 {
     // sanity check
     assert(p.size() > 0);

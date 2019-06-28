@@ -4,9 +4,9 @@
 #include <unistd.h>
 
 #include <GL/glew.h>
-bool parseCmdLine(int argc, char** argv, 
-                  ot::Options& opt, 
-                  char* & meshFile, 
+bool parseCmdLine(int argc, char** argv,
+                  ot::Options& opt,
+                  char* & meshFile,
                   double& scale,
                   int   & verbose)
 {
@@ -48,8 +48,8 @@ bool parseCmdLine(int argc, char** argv,
         }
     }
 
-    if (meshFile == 0) 
-        std::cout << "Usage: " << argv[0] 
+    if (meshFile == 0)
+        std::cout << "Usage: " << argv[0]
         << " -m mesh.obj"
         << " [-t tolerance=1e-6]"
         << " [-i maxIters=1000]"
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     mesh.read(meshFile);
     mesh.normalize(); // make Area = 1
     std::cout << "MeshArea = " << mesh.computeTotalArea() << std::endl;
-    
+
     // timestep proportinal to mesh size
     double h = mesh.computeMaxEdgeLength();
     std::cout << "h = " << h << std::endl;
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
     // set gamma a la [Crane et al. 2013]
     if (opt.gamma == 0.) opt.gamma = scale*h*h;
     std::cout << "gamma = " << opt.gamma << std::endl;
- 
+
     // bake kernel
     VectorXd area;
     mesh.computeVertArea(area);
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     // set OT solver
     ot::ConvSolver otsolver(opt, area, lsolver);
 
-  
+
     // gui
     Viewer viewer;
     viewer.meshPtr = &mesh;

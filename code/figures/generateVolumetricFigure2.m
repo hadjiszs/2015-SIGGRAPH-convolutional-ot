@@ -10,8 +10,9 @@ addpath('../../data/meshes/');
 addpath('../mesh_functions/');
 
 % #bins
-N = 40;
-N = 60;
+%N = 40;
+%N = 60;
+N = 20;
 
 %%
 % helpers
@@ -29,8 +30,10 @@ Entropy = @(x)-sum(x(x>0).*log(x(x>0)));
 %%
 % Blur kernel
 
-mu = N/50;
-mu = N/40;
+%mu = N/50;
+%mu = N/40;
+mu = N/(N+10);
+mu = N/(N-10);
 blur = load_filtering('imgaussian', N);
 K = @(x)blur(x,mu);
 Kv = @(x)apply_3d_func(K,x);
@@ -42,7 +45,7 @@ if 1 % not(exist('names'))
     %names = {'spiky', 'spheres'};
     %names = {'spiky', 'sphere'};
     %names = {'sphere', 'boxes'};
-    %names = {'duck', 'horse'};
+    %names = {'spiky', 'cone_rotated'};
     %names = {'duck' 'horse' 'shears' 'moomoo_s0'};
     names = {'spiky','sphere','boxes','cone_rotated'};
 end
@@ -51,7 +54,7 @@ p = length(names);
 f = {};
 for i=1:p
     name = names{i};
-    f{i} = normalize( load_volume(names{i}, N) );
+    f{i} = normalize( load_volume(names{i}, N) )
     if isempty(f{i})
         %% try to load a mesh %%
         [V,F] = read_off([name '.off']);
@@ -61,6 +64,7 @@ for i=1:p
     end
 end
 
+disp(f{2})
 
 opts.alpha = 1; % transparency
 opts.color = [0 1 0];
@@ -81,12 +85,12 @@ if not(exist(rep))
 end
 
 
-%% 
+%%
 % Compute transport coupling
-%   pi = diag(w1)*K*diag(w0)  
-% and  
-%   pi*1 = w1.*K(w0) = p1 
-% and 
+%   pi = diag(w1)*K*diag(w0)
+% and
+%   pi*1 = w1.*K(w0) = p1
+% and
 %   pi'*1 = w1.*K(w0) = p0
 
 options.tol = 1e-9;
@@ -96,13 +100,13 @@ options.verb = 2;
 slicing = @(x)x(:,:,end/2);
 options.disp = @(w0,w1)imageplot( slicing(w0.*K(w1)) );
 
-% clf; 
+% clf;
 % [distances,w0,w1] = convolutionalDistance(f{1}, f{2}, [], K,[], options);
 
 %%
 % Compute displacemet interpolation
 
-q = 5; 
+q = 3;
 switch p
     case 2
         % displacement interpolation
@@ -120,64 +124,76 @@ switch p
     case 4
         % bilinear interpolation
         t = linspace(0,1,q);
-        [T,S] = meshgrid(t,t); S = S(:); T = T(:);
-        W = [(1-S).*(1-T) S.*(1-T) (1-S).*T S.*T]';
+        [T,S] = meshgrid(t,t)
+        S = S(:); T = T(:);
+        W = [(1-S).*(1-T) S.*(1-T) (1-S).*T S.*T]'
 end
 Q = size(W,2);
 
 cachedMeshes = cell(Q,1);
 
-parfor i=1:Q
-    fprintf('%d of %d...\n',i,Q);
-    w = W(:,i)'; w = w/sum(w);
-    
-    % select entropy bound
-	entropyLimit = [];
-    % store as 2D matrix
-    Hv = []; 
-    for k = 1:p        
-        Hv = [Hv f{k}(:)];
-    end
-    % do the computation
-    options = [];
-    options.disp = @(x) plot_isosurface(reshape(x,[N N N]));
-    options.verb = 2;
-    options.tol = 0;
-    options.niter = 100;
-    [B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
-    B = reshape(B, [N N N]);
-    B = B/max(B(:));
-    % display
-%     clf; 
-    opts = [];
-    opts.alpha = 1; % transparency
-    if p==2
-        opts.color = [w(1) 0 w(2)];
-    else
-        opts.color = [w(1) w(2) w(3)];
-    end
-    opts.isolevel = median(B(:));
-    opts.isolevel = (max(B(:))-min(B(:)))/2;
-    F = plot_isosurface(B,opts);    
-    close all;
-    % save as image
-%     if p==4
-%         str = ['barycenter-' num2str(S(i)*(q-1)) '-' num2str(T(i)*(q-1))];
-%     else
-%         str = ['barycenter-' num2str(i)];
-%     end
-%     saveas(gcf, [rep str '.png'], 'png');
+                                %parfor i=1:Q
+%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%
 
-    % save as object
-    mesh = [];
-    mesh.vertices = F.vertices;
-    mesh.triangles = F.faces;
-    mesh.numVertices = size(F.vertices, 1);
-%     vertexTexture = zeros(mesh.numVertices,1);
-%     writeTexturedObj([rep 'barycenter-' str '.obj'], mesh, vertexTexture); 
-    
-    cachedMeshes{i} = mesh;
-    
+i=5;
+fprintf('%d of %d...\n',i,Q);
+w = W(:,i)'; w = w/sum(w)
+
+                                % select entropy bound
+entropyLimit = [];
+                                % store as 2D matrix
+Hv = [];
+for k = 1:p
+  Hv = [Hv f{k}(:)];
+end
+
+disp('size of Hv')
+disp(size(Hv)) % voxelization N*N*N en une colonne pour chaque mesh
+% Hv -> N*N*N ; # NBMESH
+                                % do the computation
+options = [];
+options.disp = @(x) plot_isosurface(reshape(x,[N N N]));
+options.verb = 2;
+options.tol = 0;
+options.niter = 100
+%%
+[B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
+%%
+B = reshape(B, [N N N]);
+B = B/max(B(:));
+disp(B);
+                                % display
+clf;
+opts = [];
+opts.alpha = 1; % transparency
+if p==2
+  opts.color = [w(1) 0 w(2)];
+else
+  opts.color = [w(1) w(2) w(3)];
+end
+%opts.isolevel = median(B(:))
+opts.isolevel = (max(B(:))-min(B(:)))/2
+F = plot_isosurface(B,opts);
+close all;
+                                % save as image
+if p==4
+  str = ['barycenter-' num2str(S(i)*(q-1)) '-' num2str(T(i)*(q-1))];
+else
+  str = ['barycenter-' num2str(i)];
+end
+saveas(gcf, [rep str '.png'], 'png');
+
+                                % save as object
+mesh = [];
+mesh.vertices = F.vertices;
+mesh.triangles = F.faces;
+mesh.numVertices = size(F.vertices, 1);
+vertexTexture = zeros(mesh.numVertices,1);
+writeTexturedObj([rep 'barycenter-' str '.obj'], mesh, vertexTexture);
+
+%cachedMeshes{i} = mesh;
+
 %     shift = [0 170*S(mod(i,q)+1) 170*T(floor(i/q+1))];
 %     fullX = [fullX ; bsxfun(@plus,mesh.vertices,shift)];
 %     if i>1
@@ -185,9 +201,24 @@ parfor i=1:Q
 %     else
 %         fullT = mesh.triangles;
 %     end
-end
- 
+%end
+
 %% Rescale to unit box
+
+return;
+
+
+                                %
+                                %
+                                %
+                                %
+                                %
+                                %
+                                %
+                                %
+                                %
+
+
 
 minCoord = Inf;
 for i=1:length(cachedMeshes)
@@ -217,7 +248,7 @@ for i=1:length(cachedMeshes);
     else
         fullT = cachedMeshes{i}.triangles;
     end
-    
+
     textureCoords = [textureCoords; repmat([S(i) T(i)],cachedMeshes{i}.numVertices,1)];
 end
 
