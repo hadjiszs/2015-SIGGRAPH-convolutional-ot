@@ -10,9 +10,9 @@ addpath('../../data/meshes/');
 addpath('../mesh_functions/');
 
 % #bins
-%N = 40;
+N = 40;
 %N = 60;
-N = 4;
+%N = 4;
 
 %%
 % helpers
@@ -33,36 +33,32 @@ Entropy = @(x)-sum(x(x>0).*log(x(x>0)));
 %mu = N/50;
 %mu = N/40;
 %mu = N/(N+10);
-disp(N);
-                                %mu = N/(N-10)
-mu=round(N/(N-2));
+%disp(N);
+mu = N/40;
+%mu=round(N/(N-2));
 blur = load_filtering('imgaussian', N);
 K = @(x)blur(x,mu);
-p_dummy = normalize(abs(sin(linspace(0,100,N*N*N)) + rand(1,N*N*N) ));
 
-Kv1d = @(x)imgaussian(x, mu, mu*10);
-Kv = @(x)apply_3d_func( @(x)imgaussian(x, mu, mu*10) , x);
+                                %Kv1d = @(x)imgaussian(x, mu, mu*10);
+%Kv = @(x)apply_3d_func(K,x);
+Kv = @(x)apply_3d_func( @(x)imgaussian(x, mu, mu*50) , x);
 
+%% ISOLATED TEST
+p_dummy = normalize(abs(sin(linspace(0,20,N*N*N)) + rand(1,N*N*N) ));
 disp('size of p_dummy');
 disp(size(p_dummy));
 atv = Kv(p_dummy')
 
-v = ones(size(p_dummy));
-areaWeights = ones(size(p_dummy, 1), 1);
+%v = ones(size(p_dummy));
+%areaWeights = ones(size(p_dummy, 1), 1);
 
-%plot(1:N*N*N, testv);
-%plot(p_dummy' - Kv(p_dummy'));
 plot(atv);
-%ylab = strcat('average on the number of iterations needed to have a good score (', int2str(prepeat), ' repetitions)');
-%ylabel(ylab, 'FontSize', 10);
-%xlabel('val', 'FontSize', 10);
-%ylim([0 inf]);
+%plot(p_dummy');
 tit = strcat('test values');
 title([tit])
 
-%xsize = log2(size(matchAB, 1));
-%line([xsize xsize], [0 max(iterations)+10], 'Color','red','LineStyle','--');
-
+%csvwrite('pdummy.csv', p_dummy');
+%csvwrite('afterkv.csv', atv);
 print('outputestv', '-dpng');
 
 return;
@@ -93,7 +89,6 @@ for i=1:p
     end
 end
 
-disp(f{2})
 
 opts.alpha = 1; % transparency
 opts.color = [0 1 0];
@@ -161,7 +156,7 @@ Q = size(W,2);
 
 cachedMeshes = cell(Q,1);
 
-                                %parfor i=1:Q
+%parfor i=1:Q
 %%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%
 
@@ -177,8 +172,8 @@ for k = 1:p
   Hv = [Hv f{k}(:)];
 end
 
-disp('size of Hv')
-disp(size(Hv)) % voxelization N*N*N en une colonne pour chaque mesh
+%disp('size of Hv')
+%disp(size(Hv)) % voxelization N*N*N en une colonne pour chaque mesh
 % Hv -> N*N*N ; # NBMESH
                                 % do the computation
 options = [];
@@ -191,7 +186,6 @@ options.niter = 100
 %%
 B = reshape(B, [N N N]);
 B = B/max(B(:));
-disp(B);
                                 % display
 clf;
 opts = [];

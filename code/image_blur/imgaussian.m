@@ -28,19 +28,11 @@ if(~exist('siz','var')), siz=sigma*6; end
 
 if(sigma>0)
                                 % Make 1D Gaussian kernel
-  sigma;
-  disp('size is ')
-  disp(siz);
     x=-ceil(siz/2):ceil(siz/2);
     H = exp(-(x.^2/(2*sigma^2)));
     H = H/sum(H(:)) % == normalize() ?
 
-    disp('ndims(I) is ');
-    disp(ndims(I))
-    disp('size(I) is ');
-    disp(size(I))
-    disp('size(I,3) is ');
-    disp(size(I,3))
+    csvwrite('hkernel.csv', H');
 
                  % Filter each dimension with the 1D Gaussian kernels\
     if(ndims(I)==1)

@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <fstream>
+#include <string>
 
 #include <GL/glew.h>
 bool parseCmdLine(int argc, char** argv,
@@ -91,7 +93,7 @@ int main(int argc, char** argv)
     // const int verbose = 1;
 
     const int nb_shape = 2;
-    const int gridsize = 3; // per dimension
+    const int gridsize = 40; // per dimension
     const int nbvoxel  = gridsize * gridsize * gridsize;
 
     // bake kernel
@@ -101,7 +103,7 @@ int main(int argc, char** argv)
     // TODO: need to be defined
     SparseMatrix matrix;
     mesh.buildHeatKernel(matrix, opt.gamma);
-    const double mu = double(gridsize) / double(gridsize - 10);
+    //const double mu = double(gridsize) / double(gridsize - 10);
     // mu = N/(N-10);
     // blur = load_filtering('imgaussian', N);
     // K = @(x)blur(x,mu);
@@ -109,15 +111,65 @@ int main(int argc, char** argv)
     // unc(K,x);
 
 
+    const auto isequal = [&] (const VectorXd& lhs, const VectorXd& rhs) {
+      bool ret = true;
+
+      assert(lhs.size() == rhs.size() && "not the same size");
+
+      int i = 0;
+      for(; ret && i < lhs.size(); ++i) {
+        ret = lhs(i) == rhs(i);
+      }
+
+      if(not ret)
+        std::cerr << "Error in the iteration #" << i << std::endl;
+
+      return ret;
+    };
+
+    const auto readcsv = [&] (const std::string& fn) {
+      std::ifstream input(fn);
+      std::clog << "\n\n" << fn << "\n\n" << std::endl;
+
+      const int nblines = std::count(std::istreambuf_iterator<char>(input),
+                                     std::istreambuf_iterator<char>(), '\n');
+
+      input.seekg(0);
+      int i = 0;
+      VectorXd ret = VectorXd::Constant(nblines, 1.);
+      for(std::string line; getline( input, line ); ++i)
+      {
+        ret(i) = std::stod(line);
+      }
+
+      return ret;
+    };
+
+    VectorXd p_dummy = readcsv("pdummy.csv");
+    VectorXd afterkv = readcsv("afterkv.csv");
+    VectorXd H = readcsv("hkernel.csv");
+    std::clog << H.size() << "\n" << H << std::endl;
     // apply a gaussian filter in each dimension
     // p is the N*N*N voxelization in one column (i.e size == [N*N*N, 1])
-    const auto Kv = [&] (VectorXd& p) VectorXd {
+    const double N = 40.; // == gridsize
+    const double mu = N/40.;
+
+    const auto Kv = [&] (VectorXd& p) {
       VectorXd ret = p;
 
       
 
       return ret;
     };
+
+    assert(isequal(afterkv, Kv(p_dummy))
+           && "Kv is not correctly implemented");
+
+    return 0;
+
+    //
+    // ISOLATED PART
+    //
 
     LinearSolver lsolver;
     lsolver.factorizePosDef(matrix);
