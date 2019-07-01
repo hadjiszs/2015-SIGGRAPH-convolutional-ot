@@ -27,14 +27,24 @@ function I=imgaussian(I,sigma,siz)
 if(~exist('siz','var')), siz=sigma*6; end
 
 if(sigma>0)
-    % Make 1D Gaussian kernel
+                                % Make 1D Gaussian kernel
+  sigma;
+  disp('size is ')
+  disp(siz);
     x=-ceil(siz/2):ceil(siz/2);
     H = exp(-(x.^2/(2*sigma^2)));
-    H = H/sum(H(:));
+    H = H/sum(H(:)) % == normalize() ?
 
-    % Filter each dimension with the 1D Gaussian kernels\
+    disp('ndims(I) is ');
+    disp(ndims(I))
+    disp('size(I) is ');
+    disp(size(I))
+    disp('size(I,3) is ');
+    disp(size(I,3))
+
+                 % Filter each dimension with the 1D Gaussian kernels\
     if(ndims(I)==1)
-        I=imfilter(I,H, 'same' ,'replicate');
+      I=imfilter(I,H, 'same' ,'replicate');
     elseif(ndims(I)==2)
         Hx=reshape(H,[length(H) 1]);
         Hy=reshape(H,[1 length(H)]);
@@ -47,9 +57,9 @@ if(sigma>0)
                 I(:,:,k)=imfilter(imfilter(I(:,:,k),Hx, 'same' ,'replicate'),Hy, 'same' ,'replicate');
             end
         else
-            Hx=reshape(H,[length(H) 1 1]);
-            Hy=reshape(H,[1 length(H) 1]);
-            Hz=reshape(H,[1 1 length(H)]);
+          Hx=reshape(H,[length(H) 1 1]);
+          Hy=reshape(H,[1 length(H) 1]);
+          Hz=reshape(H,[1 1 length(H)]);
             I=imfilter(imfilter(imfilter(I,Hx, 'same' ,'replicate'),Hy, 'same' ,'replicate'),Hz, 'same' ,'replicate');
         end
     else

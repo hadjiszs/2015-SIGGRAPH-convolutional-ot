@@ -44,8 +44,8 @@ double ConvSolver::computeDistance(VectorXd  p0, VectorXd  p1,
     assert(p0.size() == p1.size());
     assert(p0.size() == mArea.size());
 
-    assert(std::abs((p0.array() * mArea.array()).sum() - 1.0) < 1e-12); 
-    assert(std::abs((p1.array() * mArea.array()).sum() - 1.0) < 1e-12); 
+    assert(std::abs((p0.array() * mArea.array()).sum() - 1.0) < 1e-12);
+    assert(std::abs((p1.array() * mArea.array()).sum() - 1.0) < 1e-12);
 
     std::vector<double> timer;
     if (verbose > 0) Timer::start(timer, COLOR_BLUE, "distance");
@@ -59,7 +59,7 @@ double ConvSolver::computeDistance(VectorXd  p0, VectorXd  p1,
 
     w0 = VectorXd::Constant(n, 1.);
     w1 = VectorXd::Constant(n, 1.);
-    
+
     VectorXd tmp;
     double dist = 0.0;
     unsigned iter = 0;
@@ -87,17 +87,17 @@ double ConvSolver::computeDistance(VectorXd  p0, VectorXd  p1,
     dist = std::sqrt(mOpt.gamma * std::max(dist, 0.0));
 
     if (verbose > 0) Timer::stop(timer, COLOR_BLUE);
-    if (verbose > 1) 
-        std::cout 
+    if (verbose > 1)
+        std::cout
         << "dist = " << dist << " ; "
-        << "converged in " 
-        << iter << " / " << mOpt.maxIters 
+        << "converged in "
+        << iter << " / " << mOpt.maxIters
         << " iterations" << std::endl;
 
     return dist;
 }
 
-void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, VectorXd& q,
+void ConvSolver::computeBarycenter(std::vector<VectorXd>& p, VectorXd alpha, VectorXd& q,
                                    bool useSharpening, int verbose) const
 {
     // sanity check
@@ -105,12 +105,12 @@ void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, Vect
     assert((int)p.size() == alpha.size());
 
     assert(mArea.size() > 0);
-    for (unsigned i = 0; i < p.size(); ++i) 
+    for (unsigned i = 0; i < p.size(); ++i)
     {
         assert(p[i].size() == mArea.size());
-        assert(std::abs((p[i].array() * mArea.array()).sum() - 1.0) < 1e-12); 
+        assert(std::abs((p[i].array() * mArea.array()).sum() - 1.0) < 1e-12);
     }
-    
+
     std::vector<double> timer;
     if (verbose > 0) Timer::start(timer, COLOR_BLUE, "barycenter");
 
@@ -124,7 +124,7 @@ void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, Vect
     q = VectorXd::Constant(n, 1.);
     std::vector<VectorXd> v(k, VectorXd::Constant(n, 1.));
     std::vector<VectorXd> w(k, VectorXd::Constant(n, 1.));
-    
+
     unsigned iter = 0;
     for ( ; iter < mOpt.maxIters; ++iter)
     {
@@ -149,7 +149,7 @@ void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, Vect
         // update barycenter q
         VectorXd prev = q;
         q = VectorXd::Zero(n);
-        for (int i = 0; i < int(k); ++i) 
+        for (int i = 0; i < int(k); ++i)
         {
             q = q.array() + alpha[i] * d[i].array().log();
         }
@@ -160,7 +160,7 @@ void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, Vect
 
         // update v
         #pragma omp parallel for
-        for (int i = 0; i < int(k); ++i) 
+        for (int i = 0; i < int(k); ++i)
         {
             v[i] = v[i].array() * (q.array() / d[i].array());
         }
@@ -173,10 +173,10 @@ void ConvSolver::computeBarycenter(std::vector<VectorXd> p, VectorXd alpha, Vect
     }
 
     if (verbose > 0) Timer::stop(timer, COLOR_BLUE);
-    if (verbose > 1) 
-        std::cout 
-        << "Converged in " 
-        << iter << " / " << mOpt.maxIters 
+    if (verbose > 1)
+        std::cout
+        << "Converged in "
+        << iter << " / " << mOpt.maxIters
         << " iterations" << std::endl;
 }
 
@@ -205,7 +205,7 @@ double ConvSolver::binarySearch(const VectorXd& q, double x0, double x1, unsigne
 
     double f0 = computeMarginalEntropy(q, x0) - mOpt.upperEntropy;
     if (std::abs(f0) < tol) return x0; // x0 is root
-    
+
     double f1 = computeMarginalEntropy(q, x1) - mOpt.upperEntropy;
     if (std::abs(f1) < tol) return x1; // x1 is root
 

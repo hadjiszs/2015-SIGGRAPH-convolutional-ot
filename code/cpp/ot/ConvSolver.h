@@ -23,7 +23,7 @@ public:
     double computeDistance(VectorXd p0, VectorXd p1, int verbose = 0) const;
     double computeDistance(VectorXd p0, VectorXd p1, VectorXd& w0, VectorXd& w1, int verbose = 0) const;
 
-    void computeBarycenter(std::vector<VectorXd> p, VectorXd alpha,
+    void computeBarycenter(std::vector<VectorXd>& p, VectorXd alpha,
                            VectorXd& q, bool useSharpening, int verbose = 0) const;
 
     void   sharpen(VectorXd& q) const;

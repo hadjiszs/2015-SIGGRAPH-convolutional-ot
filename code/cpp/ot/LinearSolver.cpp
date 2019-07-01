@@ -1,13 +1,13 @@
 #include "LinearSolver.h"
 
-bool 
+bool
 LinearSolver::factorizePosDef(const SparseMatrix& A)
 {
     mPosDefSolver.compute(A);
     return (mPosDefSolver.info() == Eigen::Success);
 }
 
-bool 
+bool
 LinearSolver::solvePosDef(const VectorXd& B, VectorXd& X) const
 {
     X.resize(B.size());

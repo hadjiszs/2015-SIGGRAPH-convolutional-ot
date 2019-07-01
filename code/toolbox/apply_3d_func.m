@@ -13,8 +13,8 @@ function y = apply_3d_func(f,x)
 %
 %   Copyright (c) 2014 Gabriel Peyre
 
-N = round( (size(x,1))^(1/3) );
-P = size(x,2);
+N = round( (size(x,1))^(1/3) )
+P = size(x,2)
 
 resh = @(x)reshape(x,[N N N]);
 flat = @(x)x(:);

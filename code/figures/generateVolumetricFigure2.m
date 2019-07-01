@@ -12,7 +12,7 @@ addpath('../mesh_functions/');
 % #bins
 %N = 40;
 %N = 60;
-N = 20;
+N = 4;
 
 %%
 % helpers
@@ -32,11 +32,40 @@ Entropy = @(x)-sum(x(x>0).*log(x(x>0)));
 
 %mu = N/50;
 %mu = N/40;
-mu = N/(N+10);
-mu = N/(N-10);
+%mu = N/(N+10);
+disp(N);
+                                %mu = N/(N-10)
+mu=round(N/(N-2));
 blur = load_filtering('imgaussian', N);
 K = @(x)blur(x,mu);
-Kv = @(x)apply_3d_func(K,x);
+p_dummy = normalize(abs(sin(linspace(0,100,N*N*N)) + rand(1,N*N*N) ));
+
+Kv1d = @(x)imgaussian(x, mu, mu*10);
+Kv = @(x)apply_3d_func( @(x)imgaussian(x, mu, mu*10) , x);
+
+disp('size of p_dummy');
+disp(size(p_dummy));
+atv = Kv(p_dummy')
+
+v = ones(size(p_dummy));
+areaWeights = ones(size(p_dummy, 1), 1);
+
+%plot(1:N*N*N, testv);
+%plot(p_dummy' - Kv(p_dummy'));
+plot(atv);
+%ylab = strcat('average on the number of iterations needed to have a good score (', int2str(prepeat), ' repetitions)');
+%ylabel(ylab, 'FontSize', 10);
+%xlabel('val', 'FontSize', 10);
+%ylim([0 inf]);
+tit = strcat('test values');
+title([tit])
+
+%xsize = log2(size(matchAB, 1));
+%line([xsize xsize], [0 max(iterations)+10], 'Color','red','LineStyle','--');
+
+print('outputestv', '-dpng');
+
+return;
 
 %%
 % Load densities
