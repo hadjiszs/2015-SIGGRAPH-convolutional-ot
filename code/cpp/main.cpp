@@ -4,8 +4,14 @@
 #include <unistd.h>
 #include <fstream>
 #include <string>
+#include <Eigen/Core>
 
 #include <GL/glew.h>
+using namespace Eigen;
+
+template<typename T>
+using vec = std::vector<T>;
+
 bool parseCmdLine(int argc, char** argv,
                   ot::Options& opt,
                   char* & meshFile,
@@ -101,8 +107,8 @@ int main(int argc, char** argv)
     //mesh.computeVertArea(area);
 
     // TODO: need to be defined
-    SparseMatrix matrix;
-    mesh.buildHeatKernel(matrix, opt.gamma);
+    // SparseMatrix matrix;
+    // mesh.buildHeatKernel(matrix, opt.gamma);
     //const double mu = double(gridsize) / double(gridsize - 10);
     // mu = N/(N-10);
     // blur = load_filtering('imgaussian', N);
@@ -154,11 +160,51 @@ int main(int argc, char** argv)
     const double N = 40.; // == gridsize
     const double mu = N/40.;
 
+    const auto imfilter = [&] (VectorXd& I, VectorXd& h) {
+      // sort of 1d convolution
+
+      
+    };
+
+    const auto get = [&] (VectorXd& p, int i, int j, int k, int n)
+      -> double&
+      {
+        // array3D[i][j][k]
+        int depth = n, width = n;
+        return p[i*(depth*width)+j*depth+k];
+      };
+
     const auto Kv = [&] (VectorXd& p) {
       VectorXd ret = p;
 
-      
+      // auto nnn = reshape(p, N, N, N);
 
+      int ntest = 3;
+      VectorXd test = VectorXd::Constant(ntest*ntest*ntest, 1.);
+
+      for(int i = 0; i < test.size(); ++i)
+        test(i) = i;
+
+      int height = ntest;
+      int width = ntest;
+      int depth = ntest;
+
+      for (int k = 0; k < depth; k++) {
+        for (int j = 0; j < height; j++) {
+          for (int i = 0; i < width; i++) {
+            std::clog << get(test, k, j, i, ntest) << " ";
+          }
+          std::clog << std::endl;
+        }
+        std::clog << "\n next layer " << std::endl;
+      }
+
+      VectorXd h = VectorXd::Constant(ntest, 1.0);
+      h(0) = -1;
+      h(1) = 0;
+      h(2) = 1;
+
+      imfilter(test, h);
       return ret;
     };
 
@@ -171,34 +217,34 @@ int main(int argc, char** argv)
     // ISOLATED PART
     //
 
-    LinearSolver lsolver;
-    lsolver.factorizePosDef(matrix);
+    // LinearSolver lsolver;
+    // lsolver.factorizePosDef(matrix);
 
-    // set OT solver
-    ot::ConvSolver otsolver(opt, area, lsolver);
+    // // set OT solver
+    // ot::ConvSolver otsolver(opt, area, lsolver);
 
-    std::vector<VectorXd> p(nb_shape);
+    // std::vector<VectorXd> p(nb_shape);
 
-    for(int i = 0; i < nb_shape; ++i)
-    {
-      p[i] = VectorXd::Constant(nbvoxel, 0.0);
-      std::cout << p[i];
-    }
+    // for(int i = 0; i < nb_shape; ++i)
+    // {
+    //   p[i] = VectorXd::Constant(nbvoxel, 0.0);
+    //   std::cout << p[i];
+    // }
 
-    p[0](0) = 0.5;
-    p[0](nbvoxel-1) = 0.5;
+    // p[0](0) = 0.5;
+    // p[0](nbvoxel-1) = 0.5;
 
-    p[1](0) = 0.5;
-    p[1](nbvoxel-1) = 0.5;
+    // p[1](0) = 0.5;
+    // p[1](nbvoxel-1) = 0.5;
 
-    VectorXd out_barycenter;
-    VectorXd alpha(nb_shape);
-    alpha[0] = 0.5;
-    alpha[1] = 0.5;
-    otsolver.computeBarycenter(p, alpha, out_barycenter,
-                               use_sharp, verbose);
+    // VectorXd out_barycenter;
+    // VectorXd alpha(nb_shape);
+    // alpha[0] = 0.5;
+    // alpha[1] = 0.5;
+    // otsolver.computeBarycenter(p, alpha, out_barycenter,
+    //                            use_sharp, verbose);
 
-    std::cout << out_barycenter;
+    // std::cout << out_barycenter;
     // // gui
     // Viewer viewer;
     // viewer.meshPtr = &mesh;
