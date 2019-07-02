@@ -142,7 +142,9 @@ int main(int argc, char** argv)
 
       int i = 0;
       for(; ret && i < lhs.size(); ++i) {
-        ret = lhs(i) == rhs(i);
+        std::clog << "#" << i << " "
+                  << lhs(i) << " ==? " << rhs(i) << std::endl;
+        ret = std::abs(lhs(i) - rhs(i)) < 0.000001;
       }
 
       if(not ret)
@@ -178,20 +180,31 @@ int main(int argc, char** argv)
     const double N = 40.; // == gridsize
     const double mu = N/40.;
 
-    const auto get = [&] (VectorXd& p, int i, int j, int k, int n)
+    // int ntest = 3;
+    // int height = ntest;
+    // int width = ntest;
+    // int depth = ntest;
+
+    int ntest = N;
+    int height = N;
+    int width = N;
+    int depth = N;
+
+    const auto get = [&] (VectorXd& p, int i, int j, int k)
       -> double&
       {
         // array3D[i][j][k]
-        int depth = n, width = n;
+        // int depth = n, width = n;
         return p[i*(depth*width)+j*depth+k];
       };
 
-    const auto imfilter = [&] (VectorXd& I, VectorXd& h) {
+    const auto imfilter = [&] (VectorXd I, const VectorXd& h, int dim) {
+      int w = width;
       VectorXd vres = I;
       // sort of 1d convolution
 
       const auto idx = [&] (int i) {
-        int lo=0, hi=width-1;
+        int lo=0, hi=w-1;
         return clamp(i, lo, hi);
       };
 
@@ -206,75 +219,76 @@ int main(int argc, char** argv)
               //std::clog<<h(p)<< "*"<<get(test, k, j, idx(i+p-DIM), ntest)<<"+";
               //res += h(p) * get(test, k, j, idx(i+p-DIM), ntest);
               //res += h(p) * get(test, k, idx(j+p-DIM), i, ntest);
-              res += h(p) * get(test, idx(k+p-DIM), j, i, ntest);
+              if(dim==1)
+                res += h(p) * get(I, k, j, idx(i+p-DIM));
+              else if(dim==2)
+                res += h(p) * get(I, k, idx(j+p-DIM), i);
+              else
+                res += h(p) * get(I, idx(k+p-DIM), j, i);
             }
-            //std::clog << "]";
-            std::clog <<res << " ";
+
+            get(vres, k, j, i) = res;
+            std::clog << res << " ";
           }
           std::clog << std::endl;
         }
         std::clog << "\n next layer " << std::endl;
       }
+      return vres;
     };
 
     const auto Kv = [&] (VectorXd& p) {
       VectorXd ret = p;
-
       // auto nnn = reshape(p, N, N, N);
 
-      int ntest = 3;
-      VectorXd test = VectorXd::Constant(ntest*ntest*ntest, 1.);
+      // VectorXd test = VectorXd::Constant(ntest*ntest*ntest, 1.);
 
-      for(int i = 0; i < test.size(); ++i)
-        test(i) = i+1;
+      // for(int i = 0; i < test.size(); ++i)
+      //   test(i) = i+1;
 
-      int height = ntest;
-      int width = ntest;
-      int depth = ntest;
+      // for (int k = 0; k < depth; k++) {
+      //   for (int j = 0; j < height; j++) {
+      //     for (int i = 0; i < width; i++) {
+      //       std::clog << get(test, k, j, i) << " ";
+      //     }
+      //     std::clog << std::endl;
+      //   }
+      //   std::clog << "\n next layer " << std::endl;
+      // }
 
-      for (int k = 0; k < depth; k++) {
-        for (int j = 0; j < height; j++) {
-          for (int i = 0; i < width; i++) {
-            std::clog << get(test, k, j, i, ntest) << " ";
-          }
-          std::clog << std::endl;
-        }
-        std::clog << "\n next layer " << std::endl;
-      }
+      // VectorXd h = VectorXd::Constant(ntest, 1.0);
+      // h(0) = -1;
+      // h(1) = 0;
+      // h(2) = 1;
 
-      VectorXd h = VectorXd::Constant(ntest, 1.0);
-      h(0) = -1;
-      h(1) = 0;
-      h(2) = 1;
+      return imfilter(imfilter(imfilter(p, H, 1), H, 2), H, 3);
+      // const auto idx = [&] (int i) {
+      //   int lo=0, hi=width-1;
+      //   return clamp(i, lo, hi);
+      // };
 
-      // imfilter(test, h);
-      const auto idx = [&] (int i) {
-        int lo=0, hi=width-1;
-        return clamp(i, lo, hi);
-      };
+      // int DIM = h.size()/2;
+      // std::clog << "DIM: " << DIM << std::endl;
+      // for (int k = 0; k < depth; k++) {
+      //   for (int j = 0; j < height; j++) {
+      //     for (int i = 0; i < width; i++) {
+      //       double res = 0.;
+      //       //std::clog << "[";
+      //       for(int p = 0; p < h.size(); ++p) {
+      //         //std::clog<<h(p)<< "*"<<get(test, k, j, idx(i+p-DIM), ntest)<<"+";
+      //         //res += h(p) * get(test, k, j, idx(i+p-DIM), ntest);
+      //         //res += h(p) * get(test, k, idx(j+p-DIM), i, ntest);
+      //         res += h(p) * get(test, idx(k+p-DIM), j, i);
+      //       }
+      //       //std::clog << "]";
+      //       std::clog <<res << " ";
+      //     }
+      //     std::clog << std::endl;
+      //   }
+      //   std::clog << "\n next layer " << std::endl;
+      // }
 
-      int DIM = h.size()/2;
-      std::clog << "DIM: " << DIM << std::endl;
-      for (int k = 0; k < depth; k++) {
-        for (int j = 0; j < height; j++) {
-          for (int i = 0; i < width; i++) {
-            double res = 0.;
-            //std::clog << "[";
-            for(int p = 0; p < h.size(); ++p) {
-              //std::clog<<h(p)<< "*"<<get(test, k, j, idx(i+p-DIM), ntest)<<"+";
-              //res += h(p) * get(test, k, j, idx(i+p-DIM), ntest);
-              //res += h(p) * get(test, k, idx(j+p-DIM), i, ntest);
-              res += h(p) * get(test, idx(k+p-DIM), j, i, ntest);
-            }
-            //std::clog << "]";
-            std::clog <<res << " ";
-          }
-          std::clog << std::endl;
-        }
-        std::clog << "\n next layer " << std::endl;
-      }
-
-      return ret;
+      //return ret;
     };
 
     assert(isequal(afterkv, Kv(p_dummy))
