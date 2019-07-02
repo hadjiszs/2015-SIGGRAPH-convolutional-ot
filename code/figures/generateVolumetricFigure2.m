@@ -188,13 +188,17 @@ options.niter = 100
 %csvwrite('hv4.csv', Hv(:,4));
 
 %%
-[B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
+%[B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
 %%
 
-B = B/max(B(:));
-csvwrite('bresnorm.csv', B);
-B = reshape(B, [N N N]);
+%csvwrite('bresnorm.csv', B);
+%B = reshape(B, [N N N]);
+%B = B/max(B(:));
                                 % display
+
+B = csvread('mybtest.csv');
+B = reshape(B, [N N N]);
+
 clf;
 opts = [];
 opts.alpha = 1; % transparency
