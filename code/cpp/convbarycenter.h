@@ -20,11 +20,37 @@ const T& clamp(T&& v, T&& lo, T&& hi) {
   return clamp(v, lo, hi, less<T>());
 }
 
+inline
+void clamp(VectorXd& q, double zero)
+{
+    for (int i = 0; i < int(q.size()); ++i) 
+    {
+        if (q[i] > zero or q[i] < -zero) continue;
+        if (q[i] >= 0.0) q[i] =  zero;
+        else             q[i] = -zero;
+    }
+}
+
+inline
+double dot_product(const VectorXd& area, const VectorXd& x, const VectorXd& y)
+{
+    VectorXd tmp = area.array() * y.array();
+    return x.dot(tmp);
+}
+
 template<int N>
 struct GridConv {
   int _width  = N;
   int _depth  = N;
   int _height = N;
+  int _niter  = 100;
+
+  VectorXd _H;
+  VectorXd _area;
+
+  GridConv() = delete;
+  GridConv(const VectorXd h, const VectorXd area)
+    : _H(h), _area(area) { }
 
   double& get(VectorXd& p, int i, int j, int k)
   {
@@ -32,6 +58,11 @@ struct GridConv {
     // int depth = n, width = n;
     return p[i*(_depth*_width)+j*_depth+k];
   };
+
+  double dotProduct(const VectorXd& x, const VectorXd& y) {
+    VectorXd tmp = _area.array() * y.array();
+    return x.dot(tmp);
+  }
 
   VectorXd imfilter(VectorXd I, const VectorXd& h, int dim) {
     int w = _width;
@@ -44,7 +75,7 @@ struct GridConv {
     };
 
     int DIM = h.size()/2;
-    std::clog << "DIM: " << DIM << std::endl;
+    // std::clog << "DIM: " << DIM << std::endl;
     for (int k = 0; k < _depth; k++) {
       for (int j = 0; j < _height; j++) {
         for (int i = 0; i < _width; i++) {
@@ -63,11 +94,11 @@ struct GridConv {
           }
 
           get(vres, k, j, i) = res;
-          std::clog << res << " ";
+          // std::clog << res << " ";
         }
-        std::clog << std::endl;
+        // std::clog << std::endl;
       }
-      std::clog << "\n next layer " << std::endl;
+      // std::clog << "\n next layer " << std::endl;
     }
     return vres;
   }
@@ -77,11 +108,15 @@ struct GridConv {
     return imfilter(imfilter(imfilter(p, H, 1), H, 2), H, 3);
   };
 
+  VectorXd Kv(VectorXd& p) {
+    return Kv(p, _H);
+  };
+
   VectorXd convoWassersteinBarycenter(std::array<VectorXd, NBSHAPE>& p,
-                                      VectorXd& w,
-                                      VectorXd& mArea) {
-    auto& areaWeights = mArea;
-    auto& alpha = w;
+                                      VectorXd& alpha) {
+    auto& areaWeights = _area;
+    auto& mArea = _area;
+
     // sanity check
     assert(p.size() > 0);
     assert((int)p.size() == alpha.size());
@@ -97,6 +132,67 @@ struct GridConv {
     }
 
     VectorXd q = p[0];
+
+    // init
+    const unsigned k = p.size();
+    const unsigned n = mArea.size();
+    const double opteps = 1e-300;
+
+    alpha /= alpha.sum();
+    // for (int i = 0; i < int(k); ++i) p[i].array() += opteps;
+
+    q = VectorXd::Constant(n, 1.);
+    std::vector<VectorXd> v(k, VectorXd::Constant(n, 1.));
+    std::vector<VectorXd> w(k, VectorXd::Constant(n, 1.));
+
+    int iter = 0;
+    for ( ; iter < _niter; ++iter)
+    {
+      // update w
+      // #pragma omp parallel for
+      for (int i = 0; i < int(k); ++i)
+      {
+        VectorXd tmp = Kv(v[i]);
+        clamp(tmp, opteps);
+        w[i] = p[i].array() / tmp.array();
+      }
+
+      // compute auxiliar d
+      std::vector<VectorXd> d(k);
+      for (int i = 0; i < int(k); ++i)
+      {
+        d[i] = v[i].array() * Kv(w[i]).array();
+        clamp(d[i], opteps);
+      }
+
+      // update barycenter q
+      VectorXd prev = q;
+      q = VectorXd::Zero(n);
+      for (int i = 0; i < int(k); ++i)
+      {
+        q = q.array() + alpha[i] * d[i].array().log();
+      }
+      q = q.array().exp();
+
+      // // Optional
+      // if (useSharpening and iter > 0) sharpen(q);
+
+      // update v
+      for (int i = 0; i < int(k); ++i)
+      {
+        v[i] = v[i].array() * (q.array() / d[i].array());
+      }
+
+      // stop criterion
+      const VectorXd diff = prev - q;
+      const double res = dotProduct(diff, diff);
+      // if (verbose > 0)
+      //   std::cout << green << "Iter " << white << iter
+      //             << ": " << res << std::endl;
+      const double tol = 1e-7;
+      if (iter > 1 and res < tol) break;
+    }
+
     return q;
   };
 };

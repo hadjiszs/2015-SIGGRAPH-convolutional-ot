@@ -47,7 +47,7 @@ Kv = @(x)apply_3d_func( @(x)imgaussian(x, mu, mu*50) , x);
 p_dummy = normalize(abs(sin(linspace(0,20,N*N*N)) + rand(1,N*N*N) ));
 disp('size of p_dummy');
 disp(size(p_dummy));
-atv = Kv(p_dummy')
+atv = Kv(p_dummy');
 
 %v = ones(size(p_dummy));
 %areaWeights = ones(size(p_dummy, 1), 1);
@@ -148,9 +148,9 @@ switch p
     case 4
         % bilinear interpolation
         t = linspace(0,1,q);
-        [T,S] = meshgrid(t,t)
+        [T,S] = meshgrid(t,t);
         S = S(:); T = T(:);
-        W = [(1-S).*(1-T) S.*(1-T) (1-S).*T S.*T]'
+        W = [(1-S).*(1-T) S.*(1-T) (1-S).*T S.*T]';
 end
 Q = size(W,2);
 
@@ -182,15 +182,15 @@ options.verb = 2;
 options.tol = 0;
 options.niter = 100
 
-csvwrite('hv1.csv', Hv(:,1));
-csvwrite('hv2.csv', Hv(:,2));
-csvwrite('hv3.csv', Hv(:,3));
-csvwrite('hv4.csv', Hv(:,4));
+%csvwrite('hv1.csv', Hv(:,1));
+%csvwrite('hv2.csv', Hv(:,2));
+%csvwrite('hv3.csv', Hv(:,3));
+%csvwrite('hv4.csv', Hv(:,4));
 
 %%
 [B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
 %%
-csvwrite('bres.csv', B);
+%csvwrite('bres.csv', B);
 
 B = reshape(B, [N N N]);
 B = B/max(B(:));

@@ -37,24 +37,18 @@ barycenter = getoptions(options,'initial_barycenter',ones(size(p,1),1));
 unit_area_projection = getoptions(options,'unit_area_projection',0);
 
 alpha = alpha / sum(alpha);
-
+disp('NITER');
+disp(niter);
 for j=1:niter
     oldBarycenter = barycenter;
 
     w = p./(kernelTranspose(bsxfun(@times,v,areaWeights)));
-    
-    if unit_area_projection == 1
-         integrals = sum(bsxfun(@times,areaWeights,v.*kernel(bsxfun(@times,w,areaWeights))),1);
-         w = bsxfun(@rdivide,w,integrals);
-    end
-    
-    d = v.*kernel(bsxfun(@times,w,areaWeights));
 
+    d = v.*kernel(bsxfun(@times,w,areaWeights));
     d(d<1e-300) = 1e-300;
 
     % Log-sum-exp to multiply a bunch of things
     barycenter = exp(sum(bsxfun(@times,alpha,log(d)),2));
-
     entropy = -sum(areaWeights.*(barycenter.*log(barycenter)));
 
     % on the first iteration it fails?
@@ -75,29 +69,16 @@ for j=1:niter
     end
 
     v = bsxfun(@times,v,barycenter)./d;
-    
-    if unit_area_projection == 1
-         integrals = sum(bsxfun(@times,areaWeights,v.*kernel(bsxfun(@times,w,areaWeights))),1);
-         v = bsxfun(@rdivide,v,integrals);
-    end
-        
-    if strcmp(class(displayFunction),'function_handle') && mod(j,disp_rate)==1
-        displayFunction(barycenter);
-        if ndims(barycenter)==1
-            box on; set(gca, 'XTick', []); set(gca, 'YTick', []);
-        end
-        drawnow;
-    end
 
-    % Gabriel: I remove the "sqrt(" in the following formula 
+    % Gabriel: I remove the "sqrt(" in the following formula
     change = sum(abs(oldBarycenter-barycenter).*areaWeights);
     area = sum(barycenter.*areaWeights);
-    
+
     if verb==1
         fprintf('Iteration %d:  change = %g, area = %g\n',j,full(change),full(area));
     elseif verb==2
         progressbar(j,niter);
-    end    
+    end
 
     if j>2 && change<tol %&& abs(area-1) < 1e-5
         if verb==2

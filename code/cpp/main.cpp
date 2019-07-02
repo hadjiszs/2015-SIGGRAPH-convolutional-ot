@@ -36,17 +36,18 @@ namespace utils {
   };
 
   const auto isequal = [] (const VectorXd& lhs, const VectorXd& rhs) {
-    const double epsilon = 0.000000001; // OK for Kv comparison
-    //const double epsilon = 0.00001; // OK for the gaussian comparison
     bool ret = true;
 
     assert(lhs.size() == rhs.size() && "not the same size");
 
     int i = 0;
+    const double f = 1.;
+    //const double epsilon = 0.000000001; // OK for Kv comparison
+    const double epsilon = 0.00001; // OK for the gaussian comparison
     for(; ret && i < lhs.size(); ++i) {
       std::clog << "#" << i << " "
-                << lhs(i) << " ==? " << rhs(i) << std::endl;
-      ret = std::abs(lhs(i) - rhs(i)) < epsilon;
+                << f*lhs(i) << " ==? " << f*rhs(i) << std::endl;
+      ret = std::abs(f*lhs(i) - f*rhs(i)) < epsilon;
     }
 
     if(not ret)
@@ -175,8 +176,6 @@ int main(int argc, char** argv)
     // apply a gaussian filter in each dimension
     // p is the N*N*N voxelization in one column (i.e size == [N*N*N, 1])
 
-    GridConv<N> grid;
-
     // assert(isequal(H, gen_gaussian(mu, mu*50.))
     //        && "generating gaussian is not ok");
     // assert(isequal(afterkv, grid.Kv(p_dummy, H))
@@ -188,17 +187,23 @@ int main(int argc, char** argv)
     p[2] = readcsv("hv3.csv");
     p[3] = readcsv("hv4.csv");
 
+    // const double f= 1e3;
+    // for(uint i = 0; i < p.size(); ++i)
+    //   p[i] *= f;
+
     VectorXd B_result = readcsv("bres.csv");
 
-    VectorXd w = VectorXd::Constant(NBSHAPE, 1.);
-    w[0] = 0.25;
-    w[1] = 0.25;
-    w[2] = 0.25;
-    w[3] = 0.25;
+    VectorXd alpha = VectorXd::Constant(NBSHAPE, 1.);
+    alpha[0] = 0.25;
+    alpha[1] = 0.25;
+    alpha[2] = 0.25;
+    alpha[3] = 0.25;
 
     const int nbvoxel  = N*N*N;
     VectorXd areaW = VectorXd::Constant(nbvoxel, 1.0);
-    VectorXd myB = grid.convoWassersteinBarycenter(p, w, areaW);
+    GridConv<N> grid{ H, areaW };
+
+    VectorXd myB = grid.convoWassersteinBarycenter(p, alpha);
 
     assert(isequal(B_result, myB)
            && "prob in convo wasserstein");
