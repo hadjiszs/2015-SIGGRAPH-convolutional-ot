@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <string>
+#include <cmath>
 #include <type_traits>
 
 #include <Eigen/Core>
@@ -134,8 +135,29 @@ int main(int argc, char** argv)
     // Kv = @(x)apply_3d_f
     // unc(K,x);
 
+    const auto gen_gaussian = [&] (int sigma, int siz) {
+      const int lo = -1 * std::ceil(siz/2);
+      const int hi = std::ceil(siz/2);
+
+      VectorXd ret = VectorXd::Constant(hi-lo+1, 1.);
+
+      double sumv= 0.;
+      for(int i = 0, v = lo; v <= hi; ++i, ++v) {
+        ret(i) = v;
+        // std::clog << ret(i) << " ";
+        ret(i) = std::exp(-(ret(i)*ret(i)/2.*(sigma*sigma)));
+        sumv += ret(i);
+      }
+
+      for(int i = 0; i < ret.size(); ++i)
+        ret(i) /= sumv;
+      // std::clog << std::endl;
+      return ret;
+    };
 
     const auto isequal = [&] (const VectorXd& lhs, const VectorXd& rhs) {
+      const double epsilon = 0.000000001; // OK for Kv comparison
+      //const double epsilon = 0.00001; // OK for the gaussian comparison
       bool ret = true;
 
       assert(lhs.size() == rhs.size() && "not the same size");
@@ -144,7 +166,7 @@ int main(int argc, char** argv)
       for(; ret && i < lhs.size(); ++i) {
         std::clog << "#" << i << " "
                   << lhs(i) << " ==? " << rhs(i) << std::endl;
-        ret = std::abs(lhs(i) - rhs(i)) < 0.000001;
+        ret = std::abs(lhs(i) - rhs(i)) < epsilon;
       }
 
       if(not ret)
@@ -171,14 +193,15 @@ int main(int argc, char** argv)
       return ret;
     };
 
+    const double N = 40.; // == gridsize
+    const double mu = N/40.;
+
     VectorXd p_dummy = readcsv("pdummy.csv");
     VectorXd afterkv = readcsv("afterkv.csv");
-    VectorXd H = readcsv("hkernel.csv");
+    VectorXd H = gen_gaussian(mu, mu*50.); //readcsv("hkernel.csv");
     std::clog << H.size() << "\n" << H << std::endl;
     // apply a gaussian filter in each dimension
     // p is the N*N*N voxelization in one column (i.e size == [N*N*N, 1])
-    const double N = 40.; // == gridsize
-    const double mu = N/40.;
 
     // int ntest = 3;
     // int height = ntest;
@@ -291,6 +314,8 @@ int main(int argc, char** argv)
       //return ret;
     };
 
+    // assert(isequal(H, gen_gaussian(mu, mu*50.))
+    //        && "generating gaussian is not ok");
     assert(isequal(afterkv, Kv(p_dummy))
            && "Kv is not correctly implemented");
 

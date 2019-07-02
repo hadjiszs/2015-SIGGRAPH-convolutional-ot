@@ -28,7 +28,7 @@ if(~exist('siz','var')), siz=sigma*6; end
 
 if(sigma>0)
                                 % Make 1D Gaussian kernel
-    x=-ceil(siz/2):ceil(siz/2);
+    x=-ceil(siz/2):ceil(siz/2)
     H = exp(-(x.^2/(2*sigma^2)));
     H = H/sum(H(:)) % == normalize() ?
 
