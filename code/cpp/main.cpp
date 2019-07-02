@@ -4,13 +4,31 @@
 #include <unistd.h>
 #include <fstream>
 #include <string>
-#include <Eigen/Core>
+#include <type_traits>
 
+#include <Eigen/Core>
 #include <GL/glew.h>
+
 using namespace Eigen;
 
 template<typename T>
 using vec = std::vector<T>;
+
+template<typename T>
+struct less {
+  bool operator()(const T& lhs, const T& rhs) const { return lhs < rhs; };
+};
+
+template<typename T, class Compare>
+const T& clamp(T&& v, T&& lo, T&& hi, Compare comp) {
+  return assert(!comp(hi, lo)),
+    comp(v, lo)? lo : comp(hi, v) ? hi : v;
+}
+
+template<typename T>
+const T& clamp(T&& v, T&& lo, T&& hi) {
+  return clamp(v, lo, hi, less<T>());
+}
 
 bool parseCmdLine(int argc, char** argv,
                   ot::Options& opt,
@@ -160,12 +178,6 @@ int main(int argc, char** argv)
     const double N = 40.; // == gridsize
     const double mu = N/40.;
 
-    const auto imfilter = [&] (VectorXd& I, VectorXd& h) {
-      // sort of 1d convolution
-
-      
-    };
-
     const auto get = [&] (VectorXd& p, int i, int j, int k, int n)
       -> double&
       {
@@ -173,6 +185,37 @@ int main(int argc, char** argv)
         int depth = n, width = n;
         return p[i*(depth*width)+j*depth+k];
       };
+
+    const auto imfilter = [&] (VectorXd& I, VectorXd& h) {
+      VectorXd vres = I;
+      // sort of 1d convolution
+
+      const auto idx = [&] (int i) {
+        int lo=0, hi=width-1;
+        return clamp(i, lo, hi);
+      };
+
+      int DIM = h.size()/2;
+      std::clog << "DIM: " << DIM << std::endl;
+      for (int k = 0; k < depth; k++) {
+        for (int j = 0; j < height; j++) {
+          for (int i = 0; i < width; i++) {
+            double res = 0.;
+            //std::clog << "[";
+            for(int p = 0; p < h.size(); ++p) {
+              //std::clog<<h(p)<< "*"<<get(test, k, j, idx(i+p-DIM), ntest)<<"+";
+              //res += h(p) * get(test, k, j, idx(i+p-DIM), ntest);
+              //res += h(p) * get(test, k, idx(j+p-DIM), i, ntest);
+              res += h(p) * get(test, idx(k+p-DIM), j, i, ntest);
+            }
+            //std::clog << "]";
+            std::clog <<res << " ";
+          }
+          std::clog << std::endl;
+        }
+        std::clog << "\n next layer " << std::endl;
+      }
+    };
 
     const auto Kv = [&] (VectorXd& p) {
       VectorXd ret = p;
@@ -183,7 +226,7 @@ int main(int argc, char** argv)
       VectorXd test = VectorXd::Constant(ntest*ntest*ntest, 1.);
 
       for(int i = 0; i < test.size(); ++i)
-        test(i) = i;
+        test(i) = i+1;
 
       int height = ntest;
       int width = ntest;
@@ -204,7 +247,33 @@ int main(int argc, char** argv)
       h(1) = 0;
       h(2) = 1;
 
-      imfilter(test, h);
+      // imfilter(test, h);
+      const auto idx = [&] (int i) {
+        int lo=0, hi=width-1;
+        return clamp(i, lo, hi);
+      };
+
+      int DIM = h.size()/2;
+      std::clog << "DIM: " << DIM << std::endl;
+      for (int k = 0; k < depth; k++) {
+        for (int j = 0; j < height; j++) {
+          for (int i = 0; i < width; i++) {
+            double res = 0.;
+            //std::clog << "[";
+            for(int p = 0; p < h.size(); ++p) {
+              //std::clog<<h(p)<< "*"<<get(test, k, j, idx(i+p-DIM), ntest)<<"+";
+              //res += h(p) * get(test, k, j, idx(i+p-DIM), ntest);
+              //res += h(p) * get(test, k, idx(j+p-DIM), i, ntest);
+              res += h(p) * get(test, idx(k+p-DIM), j, i, ntest);
+            }
+            //std::clog << "]";
+            std::clog <<res << " ";
+          }
+          std::clog << std::endl;
+        }
+        std::clog << "\n next layer " << std::endl;
+      }
+
       return ret;
     };
 
