@@ -61,7 +61,7 @@ title([tit])
 %csvwrite('afterkv.csv', atv);
 print('outputestv', '-dpng');
 
-return;
+%return;
 
 %%
 % Load densities
@@ -181,9 +181,17 @@ options.disp = @(x) plot_isosurface(reshape(x,[N N N]));
 options.verb = 2;
 options.tol = 0;
 options.niter = 100
+
+csvwrite('hv1.csv', Hv(:,1));
+csvwrite('hv2.csv', Hv(:,2));
+csvwrite('hv3.csv', Hv(:,3));
+csvwrite('hv4.csv', Hv(:,4));
+
 %%
 [B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
 %%
+csvwrite('bres.csv', B);
+
 B = reshape(B, [N N N]);
 B = B/max(B(:));
                                 % display

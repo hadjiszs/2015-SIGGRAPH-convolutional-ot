@@ -20,6 +20,7 @@ namespace utils {
     VectorXd ret = VectorXd::Constant(hi-lo+1, 1.);
 
     double sumv= 0.;
+    // pragma simd
     for(int i = 0, v = lo; v <= hi; ++i, ++v) {
       ret(i) = v;
       // std::clog << ret(i) << " ";
@@ -27,6 +28,7 @@ namespace utils {
       sumv += ret(i);
     }
 
+    // std::reduce or std::accumulate
     for(int i = 0; i < ret.size(); ++i)
       ret(i) /= sumv;
     // std::clog << std::endl;
@@ -162,20 +164,12 @@ int main(int argc, char** argv)
     std::cout << "gamma = " << opt.gamma << std::endl;
 
     const bool use_sharp = false;
-    // const int verbose = 1;
-
-    const int nb_shape = 2;
-    const int gridsize = 40; // per dimension
-    const int nbvoxel  = gridsize * gridsize * gridsize;
-
-    // bake kernel
-    VectorXd area = VectorXd::Constant(nbvoxel, 1.0);
 
     // const double N = 40.; // == gridsize
     const double mu = N/40.;
 
-    VectorXd p_dummy = readcsv("pdummy.csv");
-    VectorXd afterkv = readcsv("afterkv.csv");
+    // VectorXd p_dummy = readcsv("pdummy.csv");
+    // VectorXd afterkv = readcsv("afterkv.csv");
     VectorXd H = gen_gaussian(mu, mu*50.); //readcsv("hkernel.csv");
     std::clog << H.size() << "\n" << H << std::endl;
     // apply a gaussian filter in each dimension
@@ -185,8 +179,29 @@ int main(int argc, char** argv)
 
     // assert(isequal(H, gen_gaussian(mu, mu*50.))
     //        && "generating gaussian is not ok");
-    assert(isequal(afterkv, grid.Kv(p_dummy, H))
-           && "Kv is not correctly implemented");
+    // assert(isequal(afterkv, grid.Kv(p_dummy, H))
+    //        && "Kv is not correctly implemented");
+
+    std::array<VectorXd, NBSHAPE> p;
+    p[0] = readcsv("hv1.csv");
+    p[1] = readcsv("hv2.csv");
+    p[2] = readcsv("hv3.csv");
+    p[3] = readcsv("hv4.csv");
+
+    VectorXd B_result = readcsv("bres.csv");
+
+    VectorXd w = VectorXd::Constant(NBSHAPE, 1.);
+    w[0] = 0.25;
+    w[1] = 0.25;
+    w[2] = 0.25;
+    w[3] = 0.25;
+
+    const int nbvoxel  = N*N*N;
+    VectorXd areaW = VectorXd::Constant(nbvoxel, 1.0);
+    VectorXd myB = grid.convoWassersteinBarycenter(p, w, areaW);
+
+    assert(isequal(B_result, myB)
+           && "prob in convo wasserstein");
 
     return 0;
 }

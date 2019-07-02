@@ -2,6 +2,8 @@
 
 #include <Eigen/Core>
 
+#define NBSHAPE 4
+
 template<typename T>
 struct less {
   bool operator()(const T& lhs, const T& rhs) const { return lhs < rhs; };
@@ -75,4 +77,26 @@ struct GridConv {
     return imfilter(imfilter(imfilter(p, H, 1), H, 2), H, 3);
   };
 
+  VectorXd convoWassersteinBarycenter(std::array<VectorXd, NBSHAPE>& p,
+                                      VectorXd& w,
+                                      VectorXd& mArea) {
+    auto& areaWeights = mArea;
+    auto& alpha = w;
+    // sanity check
+    assert(p.size() > 0);
+    assert((int)p.size() == alpha.size());
+
+    assert(mArea.size() > 0);
+    for (unsigned i = 0; i < p.size(); ++i)
+    {
+      //std::clog << p[i].size() << " ==? " << mArea.size() << std::endl;
+      assert(p[i].size() == mArea.size());
+      std::clog << (p[i].array() * mArea.array()).sum() << " ==? " << 1 << std::endl;
+      std::clog << std::abs((p[i].array() * mArea.array()).sum() - 1.0) << std::endl;
+      //assert(std::abs((p[i].array() * mArea.array()).sum() - 1.0) < 3.2e-5);
+    }
+
+    VectorXd q = p[0];
+    return q;
+  };
 };
