@@ -190,10 +190,10 @@ options.niter = 100
 %%
 [B,u] = convolutionalBarycenter( Hv, w, [], Kv, [],entropyLimit, options);
 %%
-%csvwrite('bres.csv', B);
 
-B = reshape(B, [N N N]);
 B = B/max(B(:));
+csvwrite('bresnorm.csv', B);
+B = reshape(B, [N N N]);
                                 % display
 clf;
 opts = [];

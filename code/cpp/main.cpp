@@ -43,7 +43,7 @@ namespace utils {
     int i = 0;
     const double f = 1.;
     //const double epsilon = 0.000000001; // OK for Kv comparison
-    const double epsilon = 0.00001; // OK for the gaussian comparison
+    const double epsilon = 0.001; // OK for the gaussian comparison
     for(; ret && i < lhs.size(); ++i) {
       std::clog << "#" << i << " "
                 << f*lhs(i) << " ==? " << f*rhs(i) << std::endl;
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
     // for(uint i = 0; i < p.size(); ++i)
     //   p[i] *= f;
 
-    VectorXd B_result = readcsv("bres.csv");
+    VectorXd B_result = readcsv("bresnorm.csv");
 
     VectorXd alpha = VectorXd::Constant(NBSHAPE, 1.);
     alpha[0] = 0.25;
@@ -204,6 +204,12 @@ int main(int argc, char** argv)
     GridConv<N> grid{ H, areaW };
 
     VectorXd myB = grid.convoWassersteinBarycenter(p, alpha);
+
+    double maxv = 0.f;
+    for(int i = 0; i < myB.size(); ++i)
+      if(maxv < myB(i))
+        maxv = myB(i);
+    myB /= maxv;
 
     assert(isequal(B_result, myB)
            && "prob in convo wasserstein");
